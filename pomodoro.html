@@ -5,24 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>番茄钟 🍅</title>
 <style>
+  /* ── Design Tokens ── */
   :root {
-    --bg: #1a1a2e;
-    --surface: #16213e;
-    --text: #e0e0e0;
-    --text-secondary: #a0a0b0;
-    --work: #e74c3c;
-    --work-glow: rgba(231, 76, 60, 0.3);
-    --short-break: #2ecc71;
-    --short-break-glow: rgba(46, 204, 113, 0.3);
-    --long-break: #3498db;
-    --long-break-glow: rgba(52, 152, 219, 0.3);
-    --ring-bg: #2a2a4a;
-    --btn-bg: #252545;
-    --btn-hover: #30305a;
+    --bg: #0f0f1a;
+    --surface: #1a1a30;
+    --text: #e8e8f0;
+    --text-secondary: #8e8ea8;
+
+    /* Mode colors */
+    --work: #ff5e5b;
+    --work-glow: rgba(255, 94, 91, 0.35);
+    --work-ambient: rgba(255, 94, 91, 0.08);
+    --short-break: #3ddc84;
+    --short-break-glow: rgba(61, 220, 132, 0.35);
+    --short-break-ambient: rgba(61, 220, 132, 0.08);
+    --long-break: #5b9cf5;
+    --long-break-glow: rgba(91, 156, 245, 0.35);
+    --long-break-ambient: rgba(91, 156, 245, 0.08);
+
+    /* Glass morphism */
+    --glass-bg: rgba(22, 22, 44, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --glass-highlight: rgba(255, 255, 255, 0.04);
+
+    /* Ring */
+    --ring-bg: rgba(255, 255, 255, 0.06);
+    --ring-track: #1e1e38;
+
+    /* Buttons */
+    --btn-bg: rgba(255, 255, 255, 0.07);
+    --btn-hover: rgba(255, 255, 255, 0.13);
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
+
+    /* Radii */
+    --radius-sm: 10px;
+    --radius-md: 18px;
+    --radius-lg: 24px;
+    --radius-full: 9999px;
+
+    /* Timing */
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  /* ── Body & Ambient Background ── */
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     background: var(--bg);
@@ -33,46 +65,95 @@
     justify-content: center;
     user-select: none;
     -webkit-user-select: none;
+    overflow: hidden;
+    position: relative;
   }
 
+  /* Ambient glow — mode-colored radial ellipse at top */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(ellipse 60% 50% at 50% 0%, var(--ambient-color, transparent) 0%, transparent 70%);
+    transition: opacity 0.8s ease;
+  }
+
+  body[data-mode="work"]       { --ambient-color: var(--work-ambient); }
+  body[data-mode="shortBreak"] { --ambient-color: var(--short-break-ambient); }
+  body[data-mode="longBreak"]  { --ambient-color: var(--long-break-ambient); }
+
+  /* Subtle animated gradient overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+    background:
+      radial-gradient(ellipse 80% 80% at 20% 80%, rgba(255, 94, 91, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse 80% 80% at 80% 20%, rgba(91, 156, 245, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 60% at 50% 100%, rgba(61, 220, 132, 0.03) 0%, transparent 50%);
+    animation: ambientShift 18s ease-in-out infinite;
+  }
+
+  @keyframes ambientShift {
+    0%, 100% { opacity: 0.3; }
+    50%      { opacity: 0.55; }
+  }
+
+  /* ── Glass Container ── */
   .container {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 28px;
-    padding: 20px;
+    padding: 36px 32px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md), inset 0 1px 0 var(--glass-highlight);
   }
 
-  /* ---- Mode Tabs ---- */
+  /* ── Mode Tabs ── */
   .mode-tabs {
     display: flex;
     gap: 4px;
-    background: var(--surface);
-    border-radius: 32px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: var(--radius-full);
     padding: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
   }
   .mode-tab {
     border: none;
     background: transparent;
     color: var(--text-secondary);
-    padding: 10px 22px;
-    border-radius: 28px;
+    padding: 10px 24px;
+    border-radius: var(--radius-full);
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: all 0.3s var(--ease-out-expo);
     white-space: nowrap;
+    position: relative;
   }
   .mode-tab.active {
     background: var(--btn-bg);
     color: var(--text);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-sm);
   }
   .mode-tab:hover:not(.active) {
     color: var(--text);
+    background: rgba(255, 255, 255, 0.03);
   }
 
-  /* ---- Timer Ring ---- */
+  /* ── Timer Ring ── */
   .ring-container {
     position: relative;
     width: 320px;
@@ -82,21 +163,31 @@
     transform: rotate(-90deg);
     width: 100%;
     height: 100%;
+    filter: drop-shadow(0 0 14px var(--ring-glow, transparent));
+    transition: filter 0.6s ease;
   }
+  .ring-container.running .ring-svg {
+    animation: ringPulse 3s ease-in-out infinite;
+  }
+  @keyframes ringPulse {
+    0%, 100% { filter: drop-shadow(0 0 12px var(--ring-glow, transparent)); }
+    50%      { filter: drop-shadow(0 0 22px var(--ring-glow, transparent)); }
+  }
+
   .ring-bg {
     fill: none;
-    stroke: var(--ring-bg);
-    stroke-width: 8;
+    stroke: var(--ring-track);
+    stroke-width: 7;
   }
   .ring-progress {
     fill: none;
-    stroke-width: 8;
+    stroke-width: 7;
     stroke-linecap: round;
-    transition: stroke-dashoffset 0.9s linear, stroke 0.4s ease;
+    transition: stroke-dashoffset 0.6s var(--ease-out-expo), stroke 0.5s ease;
   }
-  .ring-progress.work { stroke: var(--work); }
-  .ring-progress.short-break { stroke: var(--short-break); }
-  .ring-progress.long-break { stroke: var(--long-break); }
+  .ring-progress.work        { stroke: var(--work);        --ring-glow: var(--work-glow); }
+  .ring-progress.short-break { stroke: var(--short-break); --ring-glow: var(--short-break-glow); }
+  .ring-progress.long-break  { stroke: var(--long-break);  --ring-glow: var(--long-break-glow); }
 
   .timer-content {
     position: absolute;
@@ -105,45 +196,53 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
   }
   .timer-display {
-    font-size: 68px;
+    font-size: 74px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     letter-spacing: 2px;
     color: var(--text);
+    line-height: 1;
   }
   .timer-label {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 3px;
+    letter-spacing: 4px;
+    margin-top: 2px;
   }
 
-  /* ---- Pomodoro Dots ---- */
+  /* ── Pomodoro Dots ── */
   .dots-row {
     display: flex;
-    gap: 12px;
+    gap: 14px;
     align-items: center;
   }
   .dot {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    background: var(--ring-bg);
-    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.08);
+    transition: all 0.4s var(--ease-out-back);
   }
   .dot.done {
     background: var(--work);
-    box-shadow: 0 0 10px var(--work-glow);
+    box-shadow: 0 0 12px var(--work-glow);
+    animation: dotPop 0.45s var(--ease-out-back);
+  }
+  @keyframes dotPop {
+    0%   { transform: scale(0.4); }
+    60%  { transform: scale(1.35); }
+    100% { transform: scale(1); }
   }
 
-  /* ---- Controls ---- */
+  /* ── Controls ── */
   .controls {
     display: flex;
-    gap: 16px;
+    gap: 20px;
     align-items: center;
   }
   .btn {
@@ -153,99 +252,120 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.25s var(--ease-out-expo);
     color: var(--text);
+    position: relative;
   }
   .btn:active {
-    transform: scale(0.95);
+    transform: scale(0.93);
   }
+
+  /* Main button */
   .btn-main {
-    width: 72px;
-    height: 72px;
-    font-size: 28px;
+    width: 80px;
+    height: 80px;
+    font-size: 32px;
     font-weight: 700;
     border-radius: 50%;
-    letter-spacing: 1px;
+    letter-spacing: 0px;
+    transition: all 0.3s var(--ease-out-expo), transform 0.15s ease;
   }
-  .btn-main.work-bg { background: var(--work); box-shadow: 0 4px 24px var(--work-glow); }
-  .btn-main.short-break-bg { background: var(--short-break); box-shadow: 0 4px 24px var(--short-break-glow); }
-  .btn-main.long-break-bg { background: var(--long-break); box-shadow: 0 4px 24px var(--long-break-glow); }
+  .btn-main:hover {
+    transform: translateY(-3px);
+  }
+  .btn-main:active {
+    transform: translateY(0) scale(0.94);
+  }
+  .btn-main.work-bg       { background: var(--work);        box-shadow: 0 6px 28px var(--work-glow); }
+  .btn-main.short-break-bg{ background: var(--short-break); box-shadow: 0 6px 28px var(--short-break-glow); }
+  .btn-main.long-break-bg { background: var(--long-break);  box-shadow: 0 6px 28px var(--long-break-glow); }
 
-  .btn-secondary {
+  .btn-main:hover.work-bg        { box-shadow: 0 8px 36px var(--work-glow); }
+  .btn-main:hover.short-break-bg { box-shadow: 0 8px 36px var(--short-break-glow); }
+  .btn-main:hover.long-break-bg  { box-shadow: 0 8px 36px var(--long-break-glow); }
+
+  /* Secondary icon buttons */
+  .btn-icon {
     width: 48px;
     height: 48px;
-    font-size: 18px;
+    font-size: 20px;
     background: var(--btn-bg);
     border-radius: 50%;
-  }
-  .btn-secondary:hover {
-    background: var(--btn-hover);
-  }
-  .btn-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-    background: transparent;
-    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.04);
   }
   .btn-icon:hover {
-    background: var(--btn-bg);
+    background: var(--btn-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-icon:active {
+    transform: translateY(0) scale(0.93);
   }
 
-  /* ---- Settings ---- */
+  /* ── Settings Button ── */
   .settings-btn {
     position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 40px;
-    height: 40px;
+    top: 24px;
+    right: 24px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    border: none;
-    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     color: var(--text-secondary);
     font-size: 20px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
+    z-index: 5;
   }
   .settings-btn:hover {
-    background: var(--btn-bg);
+    background: var(--btn-hover);
     color: var(--text);
+    transform: rotate(30deg);
   }
 
-  /* ---- Modal ---- */
+  /* ── Overlay & Modal ── */
   .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 10;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.25s ease;
+    transition: opacity 0.3s ease;
   }
   .overlay.show {
     opacity: 1;
     pointer-events: auto;
   }
   .modal {
-    background: var(--surface);
-    border-radius: 20px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
     padding: 32px;
     width: 90%;
     max-width: 380px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    gap: 22px;
+    box-shadow: var(--shadow-lg), inset 0 1px 0 var(--glass-highlight);
   }
   .modal h2 {
     font-size: 20px;
     font-weight: 600;
+    letter-spacing: -0.2px;
   }
   .setting-row {
     display: flex;
@@ -259,55 +379,117 @@
     flex-shrink: 0;
   }
   .setting-row input {
-    width: 70px;
-    padding: 8px 12px;
-    border-radius: 10px;
-    border: 1px solid #3a3a5a;
-    background: var(--bg);
+    width: 72px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.25);
     color: var(--text);
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 500;
     text-align: center;
     font-family: inherit;
+    transition: all 0.25s ease;
   }
   .setting-row input:focus {
     outline: none;
     border-color: var(--work);
+    box-shadow: 0 0 0 3px var(--work-glow);
   }
   .setting-unit {
     font-size: 12px;
     color: var(--text-secondary);
-    width: 30px;
+    width: 32px;
+    text-align: left;
   }
-  .modal .btn-save {
+  .btn-save {
     border: none;
-    padding: 12px;
-    border-radius: 12px;
+    padding: 13px;
+    border-radius: var(--radius-md);
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    background: var(--work);
+    background: linear-gradient(135deg, var(--work), #ff7b78);
     color: #fff;
-    transition: opacity 0.2s;
+    transition: all 0.25s ease;
+    letter-spacing: 0.3px;
   }
-  .modal .btn-save:hover { opacity: 0.9; }
+  .btn-save:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px var(--work-glow);
+  }
+  .btn-save:active {
+    transform: translateY(0);
+  }
+  .modal .btn-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  .modal .btn-close:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text);
+  }
 
-  /* ---- Responsive ---- */
+  /* ── Responsive ── */
   @media (max-width: 420px) {
+    .container {
+      padding: 28px 20px;
+      gap: 22px;
+      margin: 16px;
+    }
     .ring-container {
       width: 260px;
       height: 260px;
     }
     .timer-display {
-      font-size: 52px;
+      font-size: 56px;
+    }
+    .timer-label {
+      font-size: 12px;
+      letter-spacing: 3px;
     }
     .mode-tab {
-      padding: 8px 14px;
+      padding: 8px 16px;
       font-size: 12px;
+    }
+    .btn-main {
+      width: 68px;
+      height: 68px;
+      font-size: 26px;
+    }
+    .btn-icon {
+      width: 42px;
+      height: 42px;
+      font-size: 18px;
+    }
+    .controls {
+      gap: 14px;
+    }
+    .dots-row {
+      gap: 10px;
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
     }
   }
 </style>
 </head>
-<body>
+<body data-mode="work">
 
 <div class="container">
   <!-- Mode Tabs -->
@@ -318,7 +500,7 @@
   </div>
 
   <!-- Timer Ring -->
-  <div class="ring-container">
+  <div class="ring-container" id="ringContainer">
     <svg class="ring-svg" viewBox="0 0 200 200">
       <circle class="ring-bg" cx="100" cy="100" r="92"/>
       <circle class="ring-progress work" id="ring" cx="100" cy="100" r="92"
@@ -340,19 +522,24 @@
 
   <!-- Controls -->
   <div class="controls">
-    <button class="btn btn-icon" id="btnReset" title="重置 (R)">↺</button>
-    <button class="btn btn-main work-bg" id="btnMain" title="开始/暂停 (空格)">
-      ▶
+    <button class="btn btn-icon" id="btnReset" title="重置 (R)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.5 18.5A9 9 0 1 0 2 12"/></svg>
     </button>
-    <button class="btn btn-icon" id="btnSkip" title="跳过 (S)">⏭</button>
+    <button class="btn btn-main work-bg" id="btnMain" title="开始/暂停 (空格)">▶</button>
+    <button class="btn btn-icon" id="btnSkip" title="跳过 (S)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+    </button>
   </div>
 </div>
 
 <!-- Settings -->
-<button class="settings-btn" id="btnSettings" title="设置">⚙</button>
+<button class="settings-btn" id="btnSettings" title="设置">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+</button>
 
 <div class="overlay" id="overlay">
-  <div class="modal">
+  <div class="modal" style="position: relative;">
+    <button class="btn-close" id="btnCloseModal">✕</button>
     <h2>⚙ 设置</h2>
     <div class="setting-row">
       <label>🍅 工作时间</label>
@@ -403,8 +590,7 @@ function playBeep(freq = 880, duration = 0.15, type = 'sine') {
 }
 
 function playAlarm() {
-  // A pleasant 4-note ascending chime
-  const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
+  const notes = [523, 659, 784, 1047];
   notes.forEach((freq, i) => {
     setTimeout(() => playBeep(freq, 0.3, 'sine'), i * 150);
   });
@@ -414,7 +600,6 @@ function playAlarm() {
 // State
 // ──────────────────────────────────────────────
 const CIRCUMFERENCE = 2 * Math.PI * 92; // ~578.05
-
 const modes = ['work', 'shortBreak', 'longBreak'];
 const defaultDurations = { work: 25, shortBreak: 5, longBreak: 15 };
 
@@ -433,13 +618,13 @@ function saveSettings(settings) {
 let settings = loadSettings();
 
 let state = {
-  mode: 'work',            // 'work' | 'shortBreak' | 'longBreak'
-  pomodoros: 0,            // completed this cycle (0–3)
+  mode: 'work',
+  pomodoros: 0,
   totalSeconds: settings.work * 60,
   remainingSeconds: settings.work * 60,
   running: false,
-  startTime: null,         // Date.now() when timer started
-  elapsedBeforePause: 0,   // elapsed seconds before current run
+  startTime: null,
+  elapsedBeforePause: 0,
 };
 
 // ──────────────────────────────────────────────
@@ -448,6 +633,7 @@ let state = {
 const timerDisplay = document.getElementById('timerDisplay');
 const timerLabel = document.getElementById('timerLabel');
 const ring = document.getElementById('ring');
+const ringContainer = document.getElementById('ringContainer');
 const btnMain = document.getElementById('btnMain');
 const btnReset = document.getElementById('btnReset');
 const btnSkip = document.getElementById('btnSkip');
@@ -469,11 +655,9 @@ function updateDisplay() {
   const { remainingSeconds, totalSeconds } = state;
   timerDisplay.textContent = formatTime(remainingSeconds);
 
-  // Progress ring
   const fraction = remainingSeconds / totalSeconds;
   ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - fraction);
 
-  // Page title
   const label = state.mode === 'work' ? '工作' : state.mode === 'shortBreak' ? '短休' : '长休';
   document.title = state.running
     ? `${formatTime(remainingSeconds)} · ${label} 🍅`
@@ -481,22 +665,20 @@ function updateDisplay() {
 }
 
 function updateModeUI() {
-  // Ring color
   ring.className = 'ring-progress ' + state.mode;
 
-  // Label
   const labels = { work: '工作', shortBreak: '短休', longBreak: '长休' };
   timerLabel.textContent = labels[state.mode];
 
-  // Main button color
   btnMain.className = 'btn btn-main ' + state.mode + '-bg';
 
-  // Mode tabs
   modeTabs.forEach(tab => {
     tab.classList.toggle('active', tab.dataset.mode === state.mode);
   });
 
-  // Dots
+  // Set body data-mode for ambient background
+  document.body.dataset.mode = state.mode;
+
   updateDots();
 }
 
@@ -551,15 +733,15 @@ function tick() {
 function startTimer() {
   if (state.running) return;
 
-  // Request wake lock
   requestWakeLock();
 
   state.running = true;
   state.startTime = Date.now();
   updateBtnMainText();
   updateDisplay();
+  ringContainer.classList.add('running');
 
-  intervalId = setInterval(tick, 200); // check frequently for smooth updates
+  intervalId = setInterval(tick, 200);
 }
 
 function pauseTimer() {
@@ -570,6 +752,7 @@ function pauseTimer() {
   clearInterval(intervalId);
   intervalId = null;
   updateBtnMainText();
+  ringContainer.classList.remove('running');
 
   releaseWakeLock();
 }
@@ -585,6 +768,7 @@ function resetTimer() {
   state.elapsedBeforePause = 0;
   state.totalSeconds = settings[state.mode] * 60;
   state.remainingSeconds = state.totalSeconds;
+  ringContainer.classList.remove('running');
   refreshAll();
   releaseWakeLock();
 }
@@ -603,6 +787,7 @@ function switchMode(mode) {
   state.elapsedBeforePause = 0;
   state.totalSeconds = settings[mode] * 60;
   state.remainingSeconds = state.totalSeconds;
+  ringContainer.classList.remove('running');
 
   refreshAll();
 }
@@ -612,19 +797,17 @@ function skipToNext() {
   intervalId = null;
   state.running = false;
   releaseWakeLock();
+  ringContainer.classList.remove('running');
 
   if (state.mode === 'work') {
-    // Complete this pomodoro
     state.pomodoros = Math.min(state.pomodoros + 1, 4);
     if (state.pomodoros >= 4) {
       state.pomodoros = 0;
       switchMode('longBreak');
-      // Reset dots after long break
     } else {
       switchMode('shortBreak');
     }
   } else {
-    // Break → work
     switchMode('work');
   }
   refreshAll();
@@ -636,6 +819,7 @@ function skipToNext() {
 function onTimerEnd() {
   playAlarm();
   sendNotification();
+  ringContainer.classList.remove('running');
 
   if (state.mode === 'work') {
     state.pomodoros = Math.min(state.pomodoros + 1, 4);
@@ -652,7 +836,6 @@ function onTimerEnd() {
       }, 800);
     }
   } else {
-    // Break ended
     setTimeout(() => {
       switchMode('work');
     }, 800);
@@ -677,7 +860,7 @@ async function requestWakeLock() {
     try {
       wakeLock = await navigator.wakeLock.request('screen');
       wakeLock.addEventListener('release', () => { wakeLock = null; });
-    } catch (_) { /* not supported or denied */ }
+    } catch (_) {}
   }
 }
 
@@ -715,7 +898,6 @@ function applySettings() {
 
   saveSettings(settings);
 
-  // Reset to work with new settings
   state.mode = 'work';
   state.pomodoros = 0;
   state.running = false;
@@ -749,6 +931,8 @@ btnSettings.addEventListener('click', () => {
   }
 });
 
+document.getElementById('btnCloseModal').addEventListener('click', closeSettings);
+
 overlay.addEventListener('click', (e) => {
   if (e.target === overlay) closeSettings();
 });
@@ -766,7 +950,6 @@ modeTabs.forEach(tab => {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-  // Don't trigger when typing in inputs
   if (e.target.tagName === 'INPUT') return;
 
   switch (e.code) {
